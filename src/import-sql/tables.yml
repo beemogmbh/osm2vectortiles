@@ -27,6 +27,14 @@ tables:
     buffer: 4
     min_zoom: 14
     max_zoom: 14
+  route_relation_members:
+    buffer: 4
+    min_zoom: 7
+    max_zoom: 14
+  rcn_ref_point:
+    buffer: 64
+    min_zoom: 7
+    max_zoom: 14
   building_polygon:
     buffer: 2
     min_zoom: 13

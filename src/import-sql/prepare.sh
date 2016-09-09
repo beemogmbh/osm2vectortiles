@@ -53,6 +53,8 @@ function main() {
     exec_sql_file "${SQL_LAYERS_DIR}airport_label.sql"
     exec_sql_file "${SQL_LAYERS_DIR}rail_station_label.sql"
     exec_sql_file "${SQL_LAYERS_DIR}motorway_junction.sql"
+    exec_sql_file "${SQL_LAYERS_DIR}route.sql"
+    exec_sql_file "${SQL_LAYERS_DIR}rcn_ref_label.sql"
 
     if [ "$SQL_CREATE_INDIZES" = true ] ; then
         echo "Create index in $OSM_DB"

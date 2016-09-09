@@ -1,4 +1,10 @@
 use_single_id_space: true
+tags:
+  load_all: true
+  exclude:
+  - created_by
+  - source
+  - "tiger:*"
 generalized_tables:
   landuse_polygon_gen0:
     source: landuse_polygon_gen1
@@ -273,6 +279,44 @@ tables:
       - embankment
       - groyne
     type: polygon
+  route_relation_members:
+    type: relation_member
+    columns:
+    - name: osm_id
+      type: id
+    - name: member
+      type: member_id
+    - name: geometry
+      type: geometry
+    - name: network
+      key: network
+      type: string
+    - name: name
+      key: name
+      type: string
+    - name: ref
+      key: ref
+      type: string
+    - name: type
+      type: mapping_value
+    mapping:
+      route: 
+      - bicycle
+      - mtb
+  rcn_ref_point:
+    fields:
+    - name: id
+      type: id
+    - name: geometry
+      type: geometry
+    - name: timestamp
+      type: pbf_timestamp
+    - name: rcn_ref_num
+      type: mapping_value
+    mapping:
+      rcn_ref:
+      - __any__
+    type: point
   building_polygon:
     fields:
     - name: id
