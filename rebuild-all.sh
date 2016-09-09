@@ -1,6 +1,3 @@
-docker stop $(docker ps -a -q)
-docker rm $(docker ps -a -q)
-
 make
 rm -r pgdata/*
 docker-compose up -d postgis
