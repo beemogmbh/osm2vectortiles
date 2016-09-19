@@ -23,10 +23,11 @@ import functools
 import json
 import pika
 from humanize import naturaltime, naturalsize
-from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from mbtoolbox.optimize import find_optimizable_tiles, all_descendant_tiles
 from mbtoolbox.mbtiles import MBTiles
 from docopt import docopt
+from minio import Minio
+from minio.error import ResponseError
 
 if os.name == 'posix' and sys.version_info[0] < 3:
     import subprocess32 as subprocess
@@ -44,24 +45,33 @@ def s3_url(host, port, bucket_name, file_name):
 
 def connect_s3(host, port, bucket_name):
     is_secure = port == 443
-    conn = S3Connection(
-        os.environ['AWS_ACCESS_KEY_ID'],
-        os.environ['AWS_SECRET_ACCESS_KEY'],
-        is_secure=is_secure,
-        port=port,
-        host=host,
-        calling_format=OrdinaryCallingFormat()
+
+    url = '{}:{}'.format(
+        host, port
     )
+    
+    minioClient = Minio(url,
+                  access_key=os.environ['AWS_ACCESS_KEY_ID'],
+                  secret_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                  secure=is_secure)
 
-    conn.create_bucket(bucket_name)
-    return conn.get_bucket(bucket_name)
+    try:
+        minioClient.make_bucket(bucket_name, location="us-east-1")
+    except ResponseError as err:
+        print(err)
+
+    return minioClient
 
 
-def upload_mbtiles(bucket, mbtiles_file):
+def upload_mbtiles(bucket, bucket_name, mbtiles_file):
     """Upload mbtiles file to a bucket with the filename as S3 key"""
     keyname = os.path.basename(mbtiles_file)
-    obj = bucket.new_key(keyname)
-    obj.set_contents_from_filename(mbtiles_file, replace=True)
+    try:
+        file_stat = os.stat(mbtiles_file)
+        file_data = open(mbtiles_file)
+        bucket.put_object(bucket_name, keyname, file_data, file_stat.st_size)
+    except ResponseError as err:
+        print(err)
 
 
 def create_tilelive_bbox(bounds):
@@ -148,7 +158,7 @@ def timing(f, *args, **kwargs):
     return ret, end - start
 
 
-def handle_message(tm2source, bucket, s3_url, body):
+def handle_message(tm2source, bucket, bucket_name, s3_url, body):
     msg = json.loads(body.decode('utf-8'))
     task_id = msg['id']
     mbtiles_file = task_id + '.mbtiles'
@@ -172,7 +182,7 @@ def handle_message(tm2source, bucket, s3_url, body):
     _, optimize_time = timing(optimize_mbtiles, mbtiles_file)
     print('Optimize MBTiles: {}'.format(naturaltime(optimize_time)))
 
-    _, upload_time = timing(upload_mbtiles, bucket, mbtiles_file)
+    _, upload_time = timing(upload_mbtiles, bucket, bucket_name, mbtiles_file)
     print('Upload MBTiles : {}'.format(naturaltime(upload_time)))
 
     download_link = s3_url(mbtiles_file)
@@ -194,7 +204,7 @@ def export_remote(tm2source, rabbitmq_url, queue_name, result_queue_name,
         sys.exit(1)
 
     host = os.environ['AWS_S3_HOST']
-    port = int(os.getenv('AWS_S3_PORT', 443))
+    port = int(os.getenv('AWS_S3_PORT', 9000))
 
     print('Connect with S3 bucket {} at {}:{}'.format(
         bucket_name, host, port
@@ -218,7 +228,7 @@ def export_remote(tm2source, rabbitmq_url, queue_name, result_queue_name,
 
         try:
             result_msg = handle_message(
-                tm2source, bucket,
+                tm2source, bucket, bucket_name,
                 functools.partial(s3_url, host, port, bucket_name),
                 body
             )

@@ -105,8 +105,8 @@ export-worker:
     AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
     AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
     AWS_S3_HOST: "${AWS_S3_HOST}"
-    BUCKET_NAME: "osm2vectortiles-testing"
-    RENDER_TIMEOUT: "300"
+    BUCKET_NAME: "osm2vec"
+    RENDER_TIMEOUT: "600"
     TILE_TIMEOUT: "1800000"
 export:
   image: "osm2vectortiles/export"
@@ -146,8 +146,8 @@ mapbox-studio:
 rabbitmq:
   image: "osm2vectortiles/rabbitmq:management"
   ports:
-  - "15672"
-  - "5672"
+  - "15672:15672"
+  - "5672:5672"
   volumes_from:
    - rabbitdata
   environment:
