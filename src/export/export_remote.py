@@ -56,7 +56,8 @@ def connect_s3(host, port, bucket_name):
                   secure=is_secure)
 
     try:
-        minioClient.make_bucket(bucket_name, location="us-east-1")
+        if not minioClient.bucket_exists(bucket_name):
+            minioClient.make_bucket(bucket_name, location="us-east-1")
     except ResponseError as err:
         print(err)
 

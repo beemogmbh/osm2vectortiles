@@ -9,7 +9,7 @@ rabbitdata:
 cache:
   image: "tianon/true"
   volumes:
-  - /data/cache
+  - ./cache:/data/cache
 postgis:
   image: "osm2vectortiles/postgis"
   volumes_from:
@@ -106,7 +106,7 @@ export-worker:
     AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
     AWS_S3_HOST: "${AWS_S3_HOST}"
     BUCKET_NAME: "osm2vec"
-    RENDER_TIMEOUT: "600"
+    RENDER_TIMEOUT: "3600"
     TILE_TIMEOUT: "1800000"
 export:
   image: "osm2vectortiles/export"
